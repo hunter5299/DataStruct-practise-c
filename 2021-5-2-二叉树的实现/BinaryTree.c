@@ -31,6 +31,9 @@ BTNode* BinaryTreeCreate(BTDataType* a, int n, int* pi){
 // 二叉树销毁
 void BinaryTreeDestory(BTNode** root){
 	BTNode* t = *root;
+	if (t == NULL){
+		return;
+	}
 	BinaryTreeDestory(&(*root)->_left);
 	BinaryTreeDestory(&(*root)->_right);
 	free(t);
@@ -63,14 +66,12 @@ int BinaryTreeLevelKSize(BTNode* root, int k){
 	if (root == NULL){
 		return 0;
 	}
-	if (k - 1 != 0){
-		int rc=BinaryTreeLevelKSize(root->_left, k - 1);
-		int lc=BinaryTreeLevelKSize(root->_right, k - 1);
-		return lc + rc;
-	}
-	else{
+	if (k - 1 == 0){//到达第k层
 		return 1;
 	}
+	int rc = BinaryTreeLevelKSize(root->_left, k - 1);//左子树的第k层
+	int lc = BinaryTreeLevelKSize(root->_right, k - 1);//右子树的第k层节点数
+	return lc + rc;
 }
 // 二叉树查找值为x的节点
 BTNode* BinaryTreeFind(BTNode* root, BTDataType x){
@@ -80,15 +81,15 @@ BTNode* BinaryTreeFind(BTNode* root, BTDataType x){
 	if (root->_data == x){
 		return root;
 	}
-	BTNode* retr=BinaryTreeFind(root->_left, x);
-	BTNode* retl=BinaryTreeFind(root->_right, x);
-	
+	BTNode* retr = BinaryTreeFind(root->_left, x);	
+	//若左子树存在x，则直接返回
 	if (retr != NULL){
 		return retr;
 	}
-	else{
-		return retl;
-	}
+	//否则再从右子树中遍历寻找
+	BTNode* retl=BinaryTreeFind(root->_right, x);
+	return retl;
+	
 }
 // 二叉树前序遍历 
 void BinaryTreePrevOrder(BTNode* root){
@@ -126,9 +127,14 @@ void BinaryTreeLevelOrder(BTNode* root)
 
 	QueueInit(&qu);
 	//根入队
-	QueuePush(&qu, root);
+	if (root != NULL){
+		QueuePush(&qu, root);
+	}
+	else{
+		return;
+	}
 	//若队不为空
-	while (!QueueIsEmpty(&qu))
+	while (!QueueEmpty(&qu))
 	{
 		//获取此时的队头元素
 		cur = QueueTop(&qu);
@@ -150,10 +156,10 @@ void BinaryTreeLevelOrder(BTNode* root)
 		QueuePop(&qu);
 	}
 
-	QueueDestory(&qu);
+	QueueDestroy(&qu);
 }
-//判断是否为完全二叉树
-int BinaryTreeComplete(BTNode* root)
+//判断是否为完全二叉树1 判断父节点有无右子，判断子节点是否存在
+int BinaryTreeComplete1(BTNode* root)
 {
 	Queue qu;
 	BTNode * cur;
@@ -161,9 +167,14 @@ int BinaryTreeComplete(BTNode* root)
 
 	QueueInit(&qu);
 
-	QueuePush(&qu, root);
+	if (root != NULL){
+		QueuePush(&qu, root);
+	}
+	else{
+		return 1;
+	}
 
-	while (!QueueIsEmpty(&qu))
+	while (!QueueEmpty(&qu))
 	{
 		cur = QueueTop(&qu);
 
@@ -199,6 +210,46 @@ int BinaryTreeComplete(BTNode* root)
 		QueuePop(&qu);
 	}
 
-	QueueDestory(&qu);
+	QueueDestroy(&qu);
 	return 1;
+}
+//判断是否为完全二叉树2 层序遍历全部入队，遇到null则跳出，再判断队中剩下的元素是否全是NULL，若是，则是完全二叉树
+int BinaryTreeComplete2(BTNode* root)
+{
+	Queue qu;
+	BTNode * cur;
+	int tag = 0;
+
+	QueueInit(&qu);
+
+	if (root != NULL){
+		QueuePush(&qu, root);
+	}
+	else{
+		return 1;
+	}
+	//层序遍历，入队同时出队，若遇到一个空，则跳出循环
+	while (!QueueEmpty(&qu)){
+		cur = QueueTop(&qu);
+		QueuePop(&qu);
+		if (cur == NULL){
+			break;
+		}
+		QueuePush(&qu, root->_left);
+		QueuePush(&qu, root->_right);
+	}
+	//遍历队中剩下的元素，若都是空，则是完全二叉树，若有一个非空，则不是，返回false
+	while (!QueueEmpty(&qu)){
+		cur = QueueTop(&qu);
+		QueuePop(&qu);
+		if (cur != NULL){
+			return 0;
+		}
+	}
+	QueueDestroy(&qu);
+	//遍历完成，返回true
+	return 1;
+}
+int main(){
+	return 0;
 }
